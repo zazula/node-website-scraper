@@ -1,11 +1,10 @@
 import should from 'should';
-import _ from 'lodash';
 import {
 	isUrl, getUrl, getUnixPath, getFilenameFromUrl,
 	getFilepathFromUrl, getHashFromUrl, getRelativePath,
 	shortenFilename, prettifyFilename,
 	isUriSchemaSupported, urlsEqual,
-	normalizeUrl
+	normalizeUrl, getCharsetFromCss
 } from '../../../lib/utils/index.js';
 
 describe('Utils', function () {
@@ -133,47 +132,47 @@ describe('Utils', function () {
 
 	describe('#shortenFilename', function() {
 		it('should leave file with length < 255 as is', function() {
-			var f1 = _.repeat('a', 25);
+			var f1 = new Array(25).fill('a').join('');
 			should(f1.length).be.eql(25);
 			should(shortenFilename(f1)).be.eql(f1);
 
-			var f2 = _.repeat('a', 25) + '.txt';
+			var f2 = new Array(25).fill('a').join('') + '.txt';
 			should(f2.length).be.eql(29);
 			should(shortenFilename(f2)).be.eql(f2);
 		});
 
 		it('should shorten file with length = 255', function() {
-			var f1 = _.repeat('a', 255);
+			var f1 = new Array(255).fill('a').join('');
 			should(f1.length).be.eql(255);
 			should(shortenFilename(f1).length).be.lessThan(255);
 		});
 
 		it('should shorten file with length > 255', function() {
-			var f1 = _.repeat('a', 1255);
+			var f1 = new Array(1255).fill('a').join('');
 			should(f1.length).be.eql(1255);
 			should(shortenFilename(f1).length).be.lessThan(255);
 		});
 
 		it('should shorten file with length = 255 and keep extension', function() {
-			var f1 = _.repeat('a', 251) + '.txt';
+			var f1 = new Array(251).fill('a').join('') + '.txt';
 			should(f1.length).be.eql(255);
 			should(shortenFilename(f1).length).be.lessThan(255);
 			should(shortenFilename(f1).split('.')[1]).be.eql('txt');
 		});
 
 		it('should shorten file with length > 255 and keep extension', function() {
-			var f1 = _.repeat('a', 1251) + '.txt';
+			var f1 = new Array(1251).fill('a').join('') + '.txt';
 			should(f1.length).be.eql(1255);
 			should(shortenFilename(f1).length).be.lessThan(255);
 			should(shortenFilename(f1).split('.')[1]).be.eql('txt');
 		});
 
 		it('should shorten file with length > 255 to have basename length 20 chars', function() {
-			var f1 = _.repeat('a', 500);
+			var f1 = new Array(500).fill('a').join('');
 			should(f1.length).be.eql(500);
 			should(shortenFilename(f1).split('.')[0].length).be.eql(20);
 
-			var f2 = _.repeat('a', 500) + '.txt';
+			var f2 = new Array(500).fill('a').join('') + '.txt';
 			should(f2.length).be.eql(504);
 			should(shortenFilename(f2).split('.')[0].length).be.eql(20);
 		});
@@ -229,6 +228,30 @@ describe('Utils', function () {
 		it('should return original url if it is malformed', () => {
 			const malformedUrl = 'http://example.com/%%IMAGEURL%%/bar1q2blitz.png';
 			should(normalizeUrl(malformedUrl)).be.eql(malformedUrl);
+		});
+	});
+
+	describe('#getCharsetFromCss', () => {
+		it('should return charset from the beginning of css (inside double quotes)', () => {
+			const cssText = '@charset "UTF-8"; ';
+			should(getCharsetFromCss(cssText)).be.eql('utf-8');
+		});
+
+		it('should return charset from the beginning of css (inside single quotes)', () => {
+			const cssText = `@charset 'UTF-8'; `;
+			should(getCharsetFromCss(cssText)).be.eql('utf-8');
+		});
+
+		it('should return null if no charset', () => {
+			const cssText = `h1 {color: red};`;
+			should(getCharsetFromCss(cssText)).be.eql(null);
+		});
+
+		it('should return null if charset is not valid', () => {
+			should(getCharsetFromCss('@charset  "UTF-8"; ')).be.eql(null);
+			should(getCharsetFromCss('  @charset  "UTF-8"; ')).be.eql(null);
+			should(getCharsetFromCss('@charset UTF-8;')).be.eql(null);
+			should(getCharsetFromCss('h1 {color: red}; @charset "UTF-8";')).be.eql(null);
 		});
 	});
 });

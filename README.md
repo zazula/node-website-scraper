@@ -12,15 +12,15 @@
 
 Download website to local directory (including all css, images, js, etc.)
 
-Try it in [demo app](https://scraper.nepochataya.pp.ua/) ([source](https://github.com/website-scraper/demo))
+Try it using [demo app](https://github.com/website-scraper/demo)
 
-**Note:** by default dynamic websites (where content is loaded by js) may be saved not correctly because `website-scraper` doesn't execute js, it only parses http responses for html and css files. If you need to download dynamic website take a look on [website-scraper-puppeteer](https://github.com/website-scraper/website-scraper-puppeteer) or [website-scraper-phantom](https://github.com/website-scraper/node-website-scraper-phantom).
+**Note:** by default dynamic websites (where content is loaded by js) may be saved not correctly because `website-scraper` doesn't execute js, it only parses http responses for html and css files. If you need to download dynamic website take a look on [website-scraper-puppeteer](https://github.com/website-scraper/website-scraper-puppeteer).
 
 This module is an Open Source Software maintained by one developer in free time. If you want to thank the author of this module you can use [GitHub Sponsors](https://github.com/sponsors/s0ph1e) or [Patreon](https://www.patreon.com/s0ph1e).
 
 ## Requirements
-* nodejs version >= 14.14
-* website-scraper v5 is pure ESM (it doesn't work with CommonJS), [read more in release v5.0.0 docs](https://github.com/website-scraper/node-website-scraper/releases/tag/v5.0.0)
+* nodejs version >= 18
+* website-scraper since v5 is pure ESM (it doesn't work with CommonJS), [read more in release v5.0.0 docs](https://github.com/website-scraper/node-website-scraper/releases/tag/v5.0.0)
 
 ## Installation
 ```
@@ -220,18 +220,13 @@ Plugins allow to extend scraper behaviour
     * [getReference](#getreference)
 
 ##### Built-in plugins
-Scraper has built-in plugins which are used by default if not overwritten with custom plugins. You can find them in [lib/plugins](https://github.com/website-scraper/node-website-scraper/tree/master/lib/plugins) directory or get them using 
-```javascript
-import * as plugins from 'website-scraper/plugins';
-```
+Scraper has built-in plugins which are used by default if not overwritten with custom plugins. You can find them in [lib/plugins](lib/plugins) directory. Thease plugins are intended for internal use but can be coppied if the behaviour of the plugins needs to be extended / changed.
 
 ##### Existing plugins
 * [website-scraper-puppeteer](https://github.com/website-scraper/website-scraper-puppeteer) - download dynamic (rendered with js) websites using puppeteer
-* [website-scraper-phantom](https://github.com/website-scraper/node-website-scraper-phantom) - download dynamic (rendered with js) websites using phantomJS
 * [website-scraper-existing-directory](https://github.com/website-scraper/website-scraper-existing-directory) - save files to existing directory
 
 ##### Create plugin
-**Note:** before creating new plugins consider using/extending/contributing to [existing plugins](#existing-plugins).
 
 Plugin is object with `.apply` method, can be used to change scraper behavior.
 
@@ -326,8 +321,12 @@ Parameters - object which includes:
 
 Should return resolved `Promise` if resource should be saved or rejected with Error `Promise` if it should be skipped.
 Promise should be resolved with:
-* `string` which contains response body
-* or object with properties `body` (response body, string) and `metadata` - everything you want to save for this resource (like headers, original text, timestamps, etc.), scraper will not use this field at all, it is only for result.
+* the `response` object with the `body` modified in place as necessary.
+* or object with properties 
+  * `body` (response body, string)
+  * `encoding` (`binary` or `utf8`) used to save the file, binary used by default.
+  * `metadata` (object) - everything you want to save for this resource (like headers, original text, timestamps, etc.), scraper will not use this field at all, it is only for result.
+* a binary `string`. This is advised against because of the binary assumption being made can foul up saving of `utf8` responses to the filesystem. 
 
 If multiple actions `afterResponse` added - scraper will use result from last one.
 ```javascript
@@ -342,7 +341,8 @@ registerAction('afterResponse', ({response}) => {
 			metadata: {
 				headers: response.headers,
 				someOtherData: [ 1, 2, 3 ]
-			}
+			},
+      encoding: 'utf8'
 		}
 	}
 });

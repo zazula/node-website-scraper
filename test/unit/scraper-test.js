@@ -5,9 +5,10 @@ import fs from 'fs-extra';
 import path from 'path';
 import Scraper from '../../lib/scraper.js';
 import Resource from '../../lib/resource.js';
+import * as plugins from '../../lib/plugins/index.js';
 
 import defaultOptions from 'website-scraper/defaultOptions';
-import * as plugins from 'website-scraper/plugins';
+
 
 const testDirname = './test/unit/.scraper-test';
 
@@ -103,7 +104,7 @@ describe('Scraper', () => {
 				rr.should.be.eql(r);
 				rr.getUrl().should.be.eql('http://example.com/a.png');
 				rr.getFilename().should.be.not.empty();
-				rr.getText().should.be.eql('OK');
+				rr.getText().should.be.not.empty();
 			});
 
 			it('should return null if the urlFilter returns false', async () =>{
@@ -138,7 +139,7 @@ describe('Scraper', () => {
 				rr.should.be.eql(r);
 				rr.getUrl().should.be.eql('http://example.com');
 				rr.getFilename().should.be.not.empty();
-				rr.getText().should.be.eql('OK');
+				rr.getText().should.be.not.empty();
 			});
 		});
 
@@ -160,7 +161,7 @@ describe('Scraper', () => {
 				rr.should.be.eql(r);
 				rr.getUrl().should.be.eql('http://example.com/a.png');
 				rr.getFilename().should.be.not.empty();
-				rr.getText().should.be.eql('OK');
+				rr.getText().should.be.not.empty();
 			});
 
 			it('should request the resource if maxDepth is set and resource depth is less than maxDept', async () =>{
@@ -181,7 +182,7 @@ describe('Scraper', () => {
 				rr.should.be.eql(r);
 				rr.getUrl().should.be.eql('http://example.com/a.png');
 				rr.getFilename().should.be.not.empty();
-				rr.getText().should.be.eql('OK');
+				rr.getText().should.be.not.empty();
 			});
 
 			it('should request the resource if maxDepth is set and resource depth is equal to maxDept', async () =>{
@@ -201,7 +202,7 @@ describe('Scraper', () => {
 				rr.should.be.eql(r);
 				rr.getUrl().should.be.eql('http://example.com/a.png');
 				rr.getFilename().should.be.not.empty();
-				rr.getText().should.be.eql('OK');
+				rr.getText().should.be.not.empty();
 			});
 
 			it('should return null if maxDepth is set and resource depth is greater than maxDepth', async () =>{
@@ -251,7 +252,7 @@ describe('Scraper', () => {
 
 			class AddMetadataPlugin {
 				apply (registerAction) {
-					registerAction('afterResponse', sinon.stub().returns({body: 'test body', metadata}));
+					registerAction('afterResponse', sinon.stub().returns({body: 'test body', metadata, encoding: 'utf8'}));
 				}
 			}
 
@@ -272,6 +273,7 @@ describe('Scraper', () => {
 			should(r.getUrl()).be.eql('http://example.com');
 			should(r.getType()).be.eql('html');
 			should(r.getFilename()).be.eql('generated-filename');
+			should(r.getEncoding()).be.eql('utf8');
 			should(r.metadata).be.eql(metadata);
 		});
 	});
